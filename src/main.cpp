@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <Shader.h>
 #include <config.h>
 
 const unsigned short OPENGL_MAJOR_VERSION = 4;
@@ -143,15 +144,16 @@ int main() {
 	glDeleteShader(screenVertexShader);
 	glDeleteShader(screenFragmentShader);
 
+	glDeleteShader(vertexShader.ID);
+	glDeleteShader(fragmentShader.ID);
 
-	GLuint computeShader = glCreateShader(GL_COMPUTE_SHADER);
-	glShaderSource(computeShader, 1, &screenComputeShaderSource, NULL);
-	glCompileShader(computeShader);
+	Shader computeShader("./shaders/default.comp", GL_COMPUTE_SHADER);
 
 	GLuint computeProgram = glCreateProgram();
-	glAttachShader(computeProgram, computeShader);
+	glAttachShader(computeProgram, computeShader.ID);
 	glLinkProgram(computeProgram);
 
+	glDeleteShader(computeShader.ID);
 
 	int work_grp_cnt[3];
 	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
@@ -181,9 +183,9 @@ int main() {
 		glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-		glUseProgram(screenShaderProgram);
+		glUseProgram(shaderProgram);
 		glBindTextureUnit(0, screenTex);
-		glUniform1i(glGetUniformLocation(screenShaderProgram, "screen"), 0);
+		glUniform1i(glGetUniformLocation(shaderProgram, "screen"), 0);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
