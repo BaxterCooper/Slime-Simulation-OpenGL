@@ -68,7 +68,6 @@ int main() {
 	glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 5 * sizeof(GLfloat));
 	glVertexArrayElementBuffer(VAO, EBO);
 
-
 	GLuint screenTex;
 	glCreateTextures(GL_TEXTURE_2D, 1, &screenTex);
 	glTextureParameteri(screenTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -78,23 +77,38 @@ int main() {
 	glTextureStorage2D(screenTex, 1, GL_RGBA32F, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
+	// create vertex shader
 	Shader vertexShader("./shaders/default.vert", GL_VERTEX_SHADER);
+	// create fragment shader
 	Shader fragmentShader("./shaders/default.frag", GL_FRAGMENT_SHADER);
 
+	// create shader program
 	GLuint shaderProgram = glCreateProgram();
+
+	// attach vertex and fragment shader to shader program
 	glAttachShader(shaderProgram, vertexShader.ID);
 	glAttachShader(shaderProgram, fragmentShader.ID);
+
+	// link shader program 
 	glLinkProgram(shaderProgram);
 
+	// delete vertex and fragement shader
 	glDeleteShader(vertexShader.ID);
 	glDeleteShader(fragmentShader.ID);
 
-	Shader computeShader("./shaders/default.comp", GL_COMPUTE_SHADER);
+	// create compute shader
+	Shader computeShader("./shaders/blur.comp", GL_COMPUTE_SHADER);
 
+	// create compute program
 	GLuint computeProgram = glCreateProgram();
+
+	// attach compute shader to shader program
 	glAttachShader(computeProgram, computeShader.ID);
+
+	// link shader program
 	glLinkProgram(computeProgram);
 
+	// delete compute shader
 	glDeleteShader(computeShader.ID);
 
 	int work_grp_cnt[3];
