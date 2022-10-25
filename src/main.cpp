@@ -45,38 +45,6 @@ void main()
 	FragColor = texture(screen, UVs);
 })";
 
-const char* screenComputeShaderSource = R"(#version 460 core
-layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
-layout(rgba32f, binding = 0) uniform image2D screen;
-void main()
-{
-	vec4 pixel = vec4(0.0);
-	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-	ivec2 dims = imageSize(screen);
-	bool centre_x = abs(pixel_coords.x - dims.x / 2) < 10;
-	bool centre_y = abs(pixel_coords.y - dims.y / 2) < 10;
-	if (centre_x && centre_y) {
-		pixel = vec4(1.0);
-	} else {
-		// box blur
-		pixel = vec4(0.0);
-		for (int i = -1; i < 2; i++) {
-			for (int j = -1; j < 2; j++) {
-				ivec2 offset_coord = pixel_coords + ivec2(i, j);
-				vec4 neighbour_pixel = imageLoad(screen, offset_coord);
-				pixel += neighbour_pixel;
-			}
-		}
-		pixel /= 9.0;
-	}
-
-	// dimming + set alpha channel to 1
-	pixel -= vec4(0.001);
-	pixel.w = 1.0;
-
-	imageStore(screen, pixel_coords, pixel);
-})";
-
 int main() {
 	glfwInit();
 
