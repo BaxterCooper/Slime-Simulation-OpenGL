@@ -4,8 +4,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <Shader.h>
-#include <config.h>
+#include <Shader.hpp>
+#include <Agent.hpp>
+
+#include <config.hpp>
 
 const unsigned short OPENGL_MAJOR_VERSION = 4;
 const unsigned short OPENGL_MINOR_VERSION = 6;
