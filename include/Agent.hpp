@@ -10,10 +10,12 @@
 #include <config.hpp>
 
 class Agent {
-    glm::vec2 position;
-    glm::float32 angle;
+    public:
+        glm::vec2 position;
+        glm::float32 angle;
 
-    void update() {};
+        Agent();
+
+        void update();
 };
-
 #endif
