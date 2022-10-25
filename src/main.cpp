@@ -11,8 +11,8 @@ const unsigned short OPENGL_MINOR_VERSION = 6;
 
 const bool vSync = true;
 
-int main()
-{
+int main() {
+
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
@@ -21,23 +21,22 @@ int main()
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGL Compute Shaders", NULL, NULL);
-	if (!window)
-	{
+	if (!window) {
+
 		std::cout << "Failed to create the GLFW window" << std::endl;
 		glfwTerminate();
 	}
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(vSync);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+
 		std::cout << "Failed to initialize OpenGL context" << std::endl;
 	}
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 
-	while (!glfwWindowShouldClose(window))
-	{
+	while (!glfwWindowShouldClose(window)) {
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
