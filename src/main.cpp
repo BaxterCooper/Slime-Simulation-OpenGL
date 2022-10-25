@@ -87,7 +87,6 @@ int main() {
 	glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 5 * sizeof(GLfloat));
 	glVertexArrayElementBuffer(VAO, EBO);
 
-
 	GLuint screenTex;
 	glCreateTextures(GL_TEXTURE_2D, 1, &screenTex);
 	glTextureParameteri(screenTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -111,9 +110,6 @@ int main() {
 
 	glDeleteShader(screenVertexShader);
 	glDeleteShader(screenFragmentShader);
-
-	glDeleteShader(vertexShader.ID);
-	glDeleteShader(fragmentShader.ID);
 
 	Shader computeShader("./shaders/default.comp", GL_COMPUTE_SHADER);
 
@@ -151,9 +147,9 @@ int main() {
 		glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
-		glUseProgram(shaderProgram);
+		glUseProgram(screenShaderProgram);
 		glBindTextureUnit(0, screenTex);
-		glUniform1i(glGetUniformLocation(shaderProgram, "screen"), 0);
+		glUniform1i(glGetUniformLocation(screenShaderProgram, "screen"), 0);
 		glBindVertexArray(VAO);
 		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
