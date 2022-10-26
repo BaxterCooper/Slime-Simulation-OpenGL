@@ -38,8 +38,9 @@ void main() {
 
 	// check that current shader's pixel is in vicinity of an agent
 	bool nearAgent = false;
-	float agentRadius = 4.0;
-	for (int i = 0; i < 64; i++) {
+	float agentRadius = 3.0;
+	int numAgents = 256;
+	for (int i = 0; i < numAgents; i++) {
 		vec2 agentPosition = agentData[i].xy;
 		vec2 agentDirection = agentData[i].zw;
 
@@ -68,7 +69,7 @@ void main() {
 	}
 
 	// dimming + set alpha channel to 1
-	pixel -= vec4(0.001);
+	pixel -= vec4(0.005);
 	pixel.w = 1.0;
 
 	imageStore(screen, pixel_coords, pixel);

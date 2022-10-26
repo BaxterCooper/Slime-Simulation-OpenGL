@@ -68,7 +68,7 @@ int main() {
 	// ---------------- BEGIN SHADER DATA ----------------
 
 	// We generate a bunch of positions
-	const int particles = 64;
+	const int particles = 256;
     std::vector<glm::vec4> agentData(particles);
 
 	// initial position
