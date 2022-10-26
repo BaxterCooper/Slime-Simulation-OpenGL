@@ -34,6 +34,14 @@ GLuint indices[] =
 	0, 3, 2
 };
 
+Agent *createAgents() {
+	Agent *agents = new Agent[AGENT_COUNT];
+	for (int i = 0; i < AGENT_COUNT; i++) {
+		agents[i] = Agent();
+	}
+	return agents;
+}
+
 int main() {
 	glfwInit();
 
@@ -62,14 +70,14 @@ int main() {
 	// ---------------- BEGIN SHADER DATA ----------------
 
 	// We generate a bunch of positions
-	const int particles = 256;
-    std::vector<glm::vec4> agentData(particles);
+	Agent *agents = createAgents();
+    std::vector<glm::vec4> agentData(AGENT_COUNT);
 
 	// initial position
-    for(int i = 0;i<particles;++i) {
-        glm::vec2 position = glm::vec2(glm::linearRand(0.0, 1.0), glm::linearRand(0.0, 1.0));
-        glm::vec2 velocity = glm::vec2(glm::linearRand(-1.0, 1.0), glm::linearRand(-1.0, 1.0));
-		agentData[i] = glm::vec4(position.x, position.y, velocity.x, velocity.y);
+    for(int i = 0; i < AGENT_COUNT; i++) {
+        glm::vec2 position = agents[i].position;
+        glm::vec2 direction = agents[i].direction;
+		agentData[i] = glm::vec4(position.x, position.y, direction.x, direction.y);
     }
 
 	GLuint agentDataBuffer;
@@ -77,7 +85,7 @@ int main() {
 
     // fill with initial data
     glBindBuffer(GL_ARRAY_BUFFER, agentDataBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4)*particles, &agentData[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4)*AGENT_COUNT, &agentData[0], GL_STATIC_DRAW);
 
     // set up generic attrib pointers: do I need these?
     glEnableVertexAttribArray(0);
@@ -138,7 +146,6 @@ int main() {
 		glUseProgram(computeProgram);
 		glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
-		std::cout << glGetError() << "\n";
 
 		glUseProgram(shaderProgram);
 		glBindTextureUnit(0, screenTex);
