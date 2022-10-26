@@ -5,6 +5,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define GLM_SWIZZLE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/random.hpp>
+
 #include <Shader.hpp>
 #include <Agent.hpp>
 
@@ -36,13 +42,13 @@ int main() {
 		agents.push_back(Agent());
 	}
 
-
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGL Compute Shaders", NULL, NULL);
 	if (!window) {
@@ -58,6 +64,39 @@ int main() {
 	}
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	// ---------------- BEGIN SHADER DATA ----------------
+
+	// We generate a bunch of positions
+	const int particles = 64;
+    std::vector<glm::vec4> positionData(particles);
+    std::vector<glm::vec4> velocityData(particles);
+    for(int i = 0;i<particles;++i) {
+        // initial position
+        positionData[i] = glm::gaussRand(glm::vec4(0,0,0,1), glm::vec4(1, 0.2, 1, 0));
+        velocityData[i] = glm::vec4(0);
+    }
+
+	GLuint positions_vbo, velocities_vbo;
+	glGenBuffers(1, &positions_vbo);
+    glGenBuffers(1, &velocities_vbo);
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, velocities_vbo);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)*particles, &velocityData[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, positions_vbo);
+
+    // fill with initial data
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4)*particles, &positionData[0], GL_STATIC_DRAW);
+
+    // set up generic attrib pointers: do I need these?
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (char*)0 + 0*sizeof(GLfloat));
+
+	const GLuint ssbos[] = {positions_vbo, velocities_vbo};
+    glBindBuffersBase(GL_SHADER_STORAGE_BUFFER, 1, 2, ssbos);
+
+	// ---------------- END SHADER DATA ----------------
 
 	GLuint VAO, VBO, EBO;
 	glCreateVertexArrays(1, &VAO);
@@ -143,11 +182,11 @@ int main() {
 	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
 	std::cout << "Max invocations count per work group: " << work_grp_inv << "\n";
 
-
 	while (!glfwWindowShouldClose(window)) {
 		glUseProgram(computeProgram);
 		glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		std::cout << glGetError() << "\n";
 
 		glUseProgram(shaderProgram);
 		glBindTextureUnit(0, screenTex);
