@@ -5,7 +5,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#define GLM_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -36,12 +35,6 @@ GLuint indices[] =
 };
 
 int main() {
-	// create agents
-	std::vector<Agent> agents;
-	for (int i = 0; i < AGENT_COUNT; i++) {
-		agents.push_back(Agent());
-	}
-
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
@@ -55,6 +48,7 @@ int main() {
 		std::cout << "Failed to create the GLFW window\n";
 		glfwTerminate();
 	}
+
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(vSync);
 
@@ -79,7 +73,7 @@ int main() {
     }
 
 	GLuint agentDataBuffer;
-	glGenBuffers(1, &agentDataBuffer);
+	glCreateBuffers(1, &agentDataBuffer);
 
     // fill with initial data
     glBindBuffer(GL_ARRAY_BUFFER, agentDataBuffer);
@@ -121,61 +115,24 @@ int main() {
 	glTextureStorage2D(screenTex, 1, GL_RGBA32F, WINDOW_WIDTH, WINDOW_HEIGHT);
 	glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
-	// create vertex shader
 	Shader vertexShader("./shaders/default.vert", GL_VERTEX_SHADER);
-	// create fragment shader
 	Shader fragmentShader("./shaders/default.frag", GL_FRAGMENT_SHADER);
 
-	// create shader program
 	GLuint shaderProgram = glCreateProgram();
-
-	// attach vertex and fragment shader to shader program
 	glAttachShader(shaderProgram, vertexShader.ID);
 	glAttachShader(shaderProgram, fragmentShader.ID);
-
-	// link shader program 
 	glLinkProgram(shaderProgram);
 
-	// delete vertex and fragement shader
 	glDeleteShader(vertexShader.ID);
 	glDeleteShader(fragmentShader.ID);
 
-	// create compute shader
 	Shader computeShader("./shaders/blur.comp", GL_COMPUTE_SHADER);
 
-	// create compute program
 	GLuint computeProgram = glCreateProgram();
-
-	// attach compute shader to shader program
 	glAttachShader(computeProgram, computeShader.ID);
-
-	// link shader program
 	glLinkProgram(computeProgram);
 
-	// delete compute shader
 	glDeleteShader(computeShader.ID);
-
-	int work_grp_cnt[3];
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-	std::cout << "Max work groups per compute shader" << 
-		" x:" << work_grp_cnt[0] <<
-		" y:" << work_grp_cnt[1] <<
-		" z:" << work_grp_cnt[2] << "\n";
-
-	int work_grp_size[3];
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-	std::cout << "Max work group sizes" <<
-		" x:" << work_grp_size[0] <<
-		" y:" << work_grp_size[1] <<
-		" z:" << work_grp_size[2] << "\n";
-
-	int work_grp_inv;
-	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-	std::cout << "Max invocations count per work group: " << work_grp_inv << "\n";
 
 	while (!glfwWindowShouldClose(window)) {
 		glUseProgram(computeProgram);
