@@ -6,16 +6,54 @@ layout(std430, binding=1) buffer agentbufferblock { vec4 agentData[]; };
 
 uniform float agentSpeed;
 
+vec2 rotate(vec2 v, float a) {
+	float s = sin(a);
+	float c = cos(a);
+	mat2 m = mat2(c, -s, s, c);
+	return m * v;
+}
+
 // example shader that shows the agentbufferblock data being sent between gpu/cpu
 void main() {
-	// ---------- update agents ----------
+	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	vec2 dims = vec2(imageSize(screen));
 	int index = int(gl_GlobalInvocationID);
+
+	// ---------- update agents ----------
 	vec2 agentPosition = agentData[index].xy;
 	vec2 agentDirection = agentData[index].zw;
 
-	// TODO: put sensing calculations here
-	// you can use this to read the pixels: imageLoad(screen, ivec2 coords)
+	// ---------- sensing computations ----------
+	float lookAheadDistance = 0.01;
 	agentDirection = normalize(agentDirection);
+
+	float fov = 0.2;
+	float inertia = 5.0;
+
+	vec2 lookAheadOffset1 = lookAheadDistance * rotate(agentDirection, 0.0);
+	vec2 lookAheadOffset2 = lookAheadDistance * rotate(agentDirection, 0.5 * fov);
+	vec2 lookAheadOffset3 = lookAheadDistance * rotate(agentDirection, -0.5 * fov);
+
+	vec2 lookAheadPosition1 = lookAheadOffset1 + agentPosition;
+	vec2 lookAheadPosition2 = lookAheadOffset2 + agentPosition;
+	vec2 lookAheadPosition3 = lookAheadOffset3 + agentPosition;
+
+	ivec2 lookAheadPixelLocation1 = ivec2(lookAheadPosition1 * dims);
+	ivec2 lookAheadPixelLocation2 = ivec2(lookAheadPosition2 * dims);
+	ivec2 lookAheadPixelLocation3 = ivec2(lookAheadPosition3 * dims);
+
+	// assume x/y/z/w is all the same
+	float lookAheadBrightness1 = imageLoad(screen, lookAheadPixelLocation1).x;
+	float lookAheadBrightness2 = imageLoad(screen, lookAheadPixelLocation2).x;
+	float lookAheadBrightness3 = imageLoad(screen, lookAheadPixelLocation3).x;
+
+	agentDirection =
+		lookAheadOffset1 * (lookAheadBrightness1 + inertia) +
+		lookAheadOffset2 * lookAheadBrightness2 +
+		lookAheadOffset3 * lookAheadBrightness3;
+
+	agentDirection = normalize(agentDirection);
+
 
 	agentData[index].zw = agentDirection;
 	agentPosition += agentSpeed * agentDirection;
@@ -34,9 +72,6 @@ void main() {
 	}
 
 	// ---------- drawing logic ----------
-	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-	vec2 dims = vec2(imageSize(screen));
-
 	// check that current shader's pixel is in vicinity of an agent
 	bool nearAgent = false;
 	float agentRadius = 3.0;

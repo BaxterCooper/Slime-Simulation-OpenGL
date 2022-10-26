@@ -2,8 +2,8 @@
 const float DELTA_TIME = 1.0f;
 
 /* WINDOW */
-const unsigned short WINDOW_WIDTH = 1000;
-const unsigned short WINDOW_HEIGHT = 800;
+const unsigned short WINDOW_WIDTH = 800;
+const unsigned short WINDOW_HEIGHT = 600;
 
 /* AGENT */
 const unsigned int AGENT_COUNT = 100;
