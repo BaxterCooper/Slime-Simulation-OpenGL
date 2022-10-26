@@ -27,8 +27,8 @@ void main() {
 	float lookAheadDistance = 0.01;
 	agentDirection = normalize(agentDirection);
 
-	float fov = 0.2;
-	float inertia = 5.0;
+	float fov = 0.8;
+	float inertia = 20.0;
 
 	vec2 lookAheadOffset1 = lookAheadDistance * rotate(agentDirection, 0.0);
 	vec2 lookAheadOffset2 = lookAheadDistance * rotate(agentDirection, 0.5 * fov);
@@ -54,7 +54,6 @@ void main() {
 
 	agentDirection = normalize(agentDirection);
 
-
 	agentData[index].zw = agentDirection;
 	agentPosition += agentSpeed * agentDirection;
 	agentData[index].xy = agentPosition;
@@ -74,8 +73,8 @@ void main() {
 	// ---------- drawing logic ----------
 	// check that current shader's pixel is in vicinity of an agent
 	bool nearAgent = false;
-	float agentRadius = 3.0;
-	int numAgents = 256;
+	float agentRadius = 2.5;
+	int numAgents = 1024;
 	for (int i = 0; i < numAgents; i++) {
 		vec2 agentPosition = agentData[i].xy;
 		vec2 agentDirection = agentData[i].zw;
