@@ -74,7 +74,7 @@ int main() {
 	// initial position
     for(int i = 0;i<particles;++i) {
         glm::vec2 position = glm::vec2(glm::linearRand(0.0, 1.0), glm::linearRand(0.0, 1.0));
-        glm::vec2 velocity = glm::vec2(0.9);
+        glm::vec2 velocity = glm::vec2(glm::linearRand(-1.0, 1.0), glm::linearRand(-1.0, 1.0));
 		agentData[i] = glm::vec4(position.x, position.y, velocity.x, velocity.y);
     }
 
