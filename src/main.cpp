@@ -74,7 +74,7 @@ int main() {
     for(int i = 0;i<particles;++i) {
         // initial position
         positionData[i] = glm::gaussRand(glm::vec4(0,0,0,1), glm::vec4(1, 0.2, 1, 0));
-        velocityData[i] = glm::vec4(0);
+        velocityData[i] = glm::vec4(0.8);
     }
 
 	GLuint positions_vbo, velocities_vbo;
@@ -94,7 +94,7 @@ int main() {
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (char*)0 + 0*sizeof(GLfloat));
 
 	const GLuint ssbos[] = {positions_vbo, velocities_vbo};
-    glBindBuffersBase(GL_SHADER_STORAGE_BUFFER, 1, 2, ssbos);
+	glBindBuffersBase(GL_SHADER_STORAGE_BUFFER, 1, 2, ssbos);
 
 	// ---------------- END SHADER DATA ----------------
 

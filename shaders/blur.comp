@@ -11,6 +11,8 @@ void main()
 	vec3 position = positions[index].xyz;
 	vec4 pixel = vec4(0.0);
 	pixel = vec4(position.x, position.y, position.z, 1.0);
+	position += vec3(0.0003);
+	positions[index].xyz = position;
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	// ivec2 dims = imageSize(screen);
 	// bool centre_x = abs(pixel_coords.x - dims.x / 2) < 10;
