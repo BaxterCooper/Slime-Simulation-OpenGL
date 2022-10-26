@@ -69,32 +69,27 @@ int main() {
 
 	// We generate a bunch of positions
 	const int particles = 64;
-    std::vector<glm::vec4> positionData(particles);
-    std::vector<glm::vec4> velocityData(particles);
+    std::vector<glm::vec4> agentData(particles);
+
+	// initial position
     for(int i = 0;i<particles;++i) {
-        // initial position
-        positionData[i] = glm::gaussRand(glm::vec4(0,0,0,1), glm::vec4(1, 0.2, 1, 0));
-        velocityData[i] = glm::vec4(0.8);
+        glm::vec2 position = glm::gaussRand(glm::vec2(0,0), glm::vec2(1, 0.2));
+        glm::vec2 velocity = glm::vec2(0.9);
+		agentData[i] = glm::vec4(position.x, position.y, velocity.x, velocity.y);
     }
 
-	GLuint positions_vbo, velocities_vbo;
-	glGenBuffers(1, &positions_vbo);
-    glGenBuffers(1, &velocities_vbo);
-
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, velocities_vbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(glm::vec4)*particles, &velocityData[0], GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, positions_vbo);
+	GLuint agentDataBuffer;
+	glGenBuffers(1, &agentDataBuffer);
 
     // fill with initial data
-    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4)*particles, &positionData[0], GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, agentDataBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4)*particles, &agentData[0], GL_STATIC_DRAW);
 
     // set up generic attrib pointers: do I need these?
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (char*)0 + 0*sizeof(GLfloat));
 
-	const GLuint ssbos[] = {positions_vbo, velocities_vbo};
-	glBindBuffersBase(GL_SHADER_STORAGE_BUFFER, 1, 2, ssbos);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, agentDataBuffer);
 
 	// ---------------- END SHADER DATA ----------------
 

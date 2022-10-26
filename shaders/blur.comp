@@ -2,17 +2,16 @@
 
 layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D screen;
-layout(std430, binding=1) buffer pblock { vec4 positions[]; };
-// layout(std430, binding=2) buffer pblock { vec4 velocities[]; };
+layout(std430, binding=1) buffer agentbufferblock { vec4 agentData[]; };
 
 void main()
 {
 	int index = int(gl_GlobalInvocationID);
-	vec3 position = positions[index].xyz;
+	vec2 agentPosition = agentData[index].xy;
+	vec2 agentDirection = agentData[index].zw;
 	vec4 pixel = vec4(0.0);
-	pixel = vec4(position.x, position.y, position.z, 1.0);
-	position += vec3(0.0003);
-	positions[index].xyz = position;
+	pixel = agentData[index];
+	agentData[index].x += 0.0001;
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
 	// ivec2 dims = imageSize(screen);
 	// bool centre_x = abs(pixel_coords.x - dims.x / 2) < 10;
