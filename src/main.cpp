@@ -144,6 +144,7 @@ int main() {
 
 	while (!glfwWindowShouldClose(window)) {
 		glUseProgram(computeProgram);
+		glUniform1f(glGetUniformLocation(computeProgram, "agentSpeed"), AGENT_SPEED);
 		glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
