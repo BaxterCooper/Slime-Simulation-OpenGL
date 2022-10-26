@@ -6,36 +6,42 @@ layout(std430, binding=1) buffer agentbufferblock { vec4 agentData[]; };
 
 // example shader that shows the agentbufferblock data being sent between gpu/cpu
 void main() {
-	int index = int(gl_GlobalInvocationID);
-	vec2 agentPosition = agentData[index].xy;
-	vec2 agentDirection = agentData[index].zw;
-	vec4 pixel = vec4(0.0);
-	pixel = agentData[index];
-	agentData[index].x += 0.0001;
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
+	vec2 dims = vec2(imageSize(screen));
 
-	// TODO: add this back l8er
-	// ivec2 dims = imageSize(screen);
-	// bool centre_x = abs(pixel_coords.x - dims.x / 2) < 10;
-	// bool centre_y = abs(pixel_coords.y - dims.y / 2) < 10;
-	// if (centre_x && centre_y) {
-	// 	pixel = vec4(1.0);
-	// } else {
-	// 	// box blur
-	// 	pixel = vec4(0.0);
-	// 	for (int i = -1; i < 2; i++) {
-	// 		for (int j = -1; j < 2; j++) {
-	// 			ivec2 offset_coord = pixel_coords + ivec2(i, j);
-	// 			vec4 neighbour_pixel = imageLoad(screen, offset_coord);
-	// 			pixel += neighbour_pixel;
-	// 		}
-	// 	}
-	// 	pixel /= 9.0;
-	// }
+	// check that current shader's pixel is in vicinity of an agent
+	bool nearAgent = false;
+	for (int i = 0; i < 64; i++) {
+		vec2 agentPosition = agentData[i].xy;
+		vec2 agentDirection = agentData[i].zw;
 
-	// // dimming + set alpha channel to 1
-	// pixel -= vec4(0.001);
-	// pixel.w = 1.0;
+		vec2 agentPixelCoords = agentPosition * dims;
+		nearAgent = nearAgent || length(vec2(pixel_coords) - agentPixelCoords) < 10;
+
+		if (nearAgent) {
+			break;
+		}
+	}
+
+	vec4 pixel = vec4(0.0);
+	if (nearAgent) {
+		pixel = vec4(1.0);
+	} else {
+		// box blur
+		pixel = vec4(0.0);
+		for (int i = -1; i < 2; i++) {
+			for (int j = -1; j < 2; j++) {
+				ivec2 offset_coord = pixel_coords + ivec2(i, j);
+				vec4 neighbour_pixel = imageLoad(screen, offset_coord);
+				pixel += neighbour_pixel;
+			}
+		}
+		pixel /= 9.0;
+	}
+
+	// dimming + set alpha channel to 1
+	pixel -= vec4(0.0001);
+	pixel.w = 1.0;
 
 	imageStore(screen, pixel_coords, pixel);
 }
