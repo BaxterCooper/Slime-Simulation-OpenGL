@@ -5,6 +5,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#define GLM_SWIZZLE
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/random.hpp>
+
 #include <Shader.hpp>
 #include <Agent.hpp>
 
@@ -15,19 +21,19 @@ const unsigned short OPENGL_MINOR_VERSION = 6;
 
 const bool vSync = true;
 
-// GLfloat vertices[] =
-// {
-// 	-1.0f, -1.0f , 0.0f, 0.0f, 0.0f,
-// 	-1.0f,  1.0f , 0.0f, 0.0f, 1.0f,
-// 	 1.0f,  1.0f , 0.0f, 1.0f, 1.0f,
-// 	 1.0f, -1.0f , 0.0f, 1.0f, 0.0f,
-// };
+GLfloat vertices[] =
+{
+	-1.0f, -1.0f , 0.0f, 0.0f, 0.0f,
+	-1.0f,  1.0f , 0.0f, 0.0f, 1.0f,
+	 1.0f,  1.0f , 0.0f, 1.0f, 1.0f,
+	 1.0f, -1.0f , 0.0f, 1.0f, 0.0f,
+};
 
-// GLuint indices[] =
-// {
-// 	0, 2, 1,
-// 	0, 3, 2
-// };
+GLuint indices[] =
+{
+	0, 2, 1,
+	0, 3, 2
+};
 
 int main() {
 	// create agents
@@ -36,13 +42,13 @@ int main() {
 		agents.push_back(Agent());
 	}
 
-
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
 	GLFWwindow* window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "OpenGL Compute Shaders", NULL, NULL);
 	if (!window) {
@@ -59,33 +65,61 @@ int main() {
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-	// GLuint VAO, VBO, EBO;
-	// glCreateVertexArrays(1, &VAO);
-	// glCreateBuffers(1, &VBO);
-	// glCreateBuffers(1, &EBO);
+	// ---------------- BEGIN SHADER DATA ----------------
 
-	// glNamedBufferData(VBO, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// glNamedBufferData(EBO, sizeof(indices), indices, GL_STATIC_DRAW);
+	// We generate a bunch of positions
+	const int particles = 256;
+    std::vector<glm::vec4> agentData(particles);
 
-	// glEnableVertexArrayAttrib(VAO, 0);
-	// glVertexArrayAttribBinding(VAO, 0, 0);
-	// glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+	// initial position
+    for(int i = 0;i<particles;++i) {
+        glm::vec2 position = glm::vec2(glm::linearRand(0.0, 1.0), glm::linearRand(0.0, 1.0));
+        glm::vec2 velocity = glm::vec2(glm::linearRand(-1.0, 1.0), glm::linearRand(-1.0, 1.0));
+		agentData[i] = glm::vec4(position.x, position.y, velocity.x, velocity.y);
+    }
 
-	// glEnableVertexArrayAttrib(VAO, 1);
-	// glVertexArrayAttribBinding(VAO, 1, 0);
-	// glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat));
+	GLuint agentDataBuffer;
+	glGenBuffers(1, &agentDataBuffer);
 
-	// glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 5 * sizeof(GLfloat));
-	// glVertexArrayElementBuffer(VAO, EBO);
+    // fill with initial data
+    glBindBuffer(GL_ARRAY_BUFFER, agentDataBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec4)*particles, &agentData[0], GL_STATIC_DRAW);
 
-	// GLuint screenTex;
-	// glCreateTextures(GL_TEXTURE_2D, 1, &screenTex);
-	// glTextureParameteri(screenTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	// glTextureParameteri(screenTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// glTextureParameteri(screenTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	// glTextureParameteri(screenTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	// glTextureStorage2D(screenTex, 1, GL_RGBA32F, WINDOW_WIDTH, WINDOW_HEIGHT);
-	// glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+    // set up generic attrib pointers: do I need these?
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat), (char*)0 + 0*sizeof(GLfloat));
+
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, agentDataBuffer);
+
+	// ---------------- END SHADER DATA ----------------
+
+	GLuint VAO, VBO, EBO;
+	glCreateVertexArrays(1, &VAO);
+	glCreateBuffers(1, &VBO);
+	glCreateBuffers(1, &EBO);
+
+	glNamedBufferData(VBO, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	glNamedBufferData(EBO, sizeof(indices), indices, GL_STATIC_DRAW);
+
+	glEnableVertexArrayAttrib(VAO, 0);
+	glVertexArrayAttribBinding(VAO, 0, 0);
+	glVertexArrayAttribFormat(VAO, 0, 3, GL_FLOAT, GL_FALSE, 0);
+
+	glEnableVertexArrayAttrib(VAO, 1);
+	glVertexArrayAttribBinding(VAO, 1, 0);
+	glVertexArrayAttribFormat(VAO, 1, 2, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat));
+
+	glVertexArrayVertexBuffer(VAO, 0, VBO, 0, 5 * sizeof(GLfloat));
+	glVertexArrayElementBuffer(VAO, EBO);
+
+	GLuint screenTex;
+	glCreateTextures(GL_TEXTURE_2D, 1, &screenTex);
+	glTextureParameteri(screenTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(screenTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(screenTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(screenTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureStorage2D(screenTex, 1, GL_RGBA32F, WINDOW_WIDTH, WINDOW_HEIGHT);
+	glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
 	// create vertex shader
 	Shader vertexShader("./shaders/default.vert", GL_VERTEX_SHADER);
@@ -121,39 +155,39 @@ int main() {
 	// delete compute shader
 	glDeleteShader(computeShader.ID);
 
-	// int work_grp_cnt[3];
-	// glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
-	// glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
-	// glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
-	// std::cout << "Max work groups per compute shader" << 
-	// 	" x:" << work_grp_cnt[0] <<
-	// 	" y:" << work_grp_cnt[1] <<
-	// 	" z:" << work_grp_cnt[2] << "\n";
+	int work_grp_cnt[3];
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0, &work_grp_cnt[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1, &work_grp_cnt[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2, &work_grp_cnt[2]);
+	std::cout << "Max work groups per compute shader" << 
+		" x:" << work_grp_cnt[0] <<
+		" y:" << work_grp_cnt[1] <<
+		" z:" << work_grp_cnt[2] << "\n";
 
-	// int work_grp_size[3];
-	// glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
-	// glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
-	// glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
-	// std::cout << "Max work group sizes" <<
-	// 	" x:" << work_grp_size[0] <<
-	// 	" y:" << work_grp_size[1] <<
-	// 	" z:" << work_grp_size[2] << "\n";
+	int work_grp_size[3];
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_size[0]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_size[1]);
+	glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_size[2]);
+	std::cout << "Max work group sizes" <<
+		" x:" << work_grp_size[0] <<
+		" y:" << work_grp_size[1] <<
+		" z:" << work_grp_size[2] << "\n";
 
-	// int work_grp_inv;
-	// glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
-	// std::cout << "Max invocations count per work group: " << work_grp_inv << "\n";
-
+	int work_grp_inv;
+	glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv);
+	std::cout << "Max invocations count per work group: " << work_grp_inv << "\n";
 
 	while (!glfwWindowShouldClose(window)) {
-		// glUseProgram(computeProgram);
-		// glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
-		// glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		glUseProgram(computeProgram);
+		glDispatchCompute(ceil(WINDOW_WIDTH / 8), ceil(WINDOW_HEIGHT / 4), 1);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		std::cout << glGetError() << "\n";
 
-		// glUseProgram(shaderProgram);
-		// glBindTextureUnit(0, screenTex);
-		// glUniform1i(glGetUniformLocation(shaderProgram, "screen"), 0);
-		// glBindVertexArray(VAO);
-		// glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
+		glUseProgram(shaderProgram);
+		glBindTextureUnit(0, screenTex);
+		glUniform1i(glGetUniformLocation(shaderProgram, "screen"), 0);
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, sizeof(indices) / sizeof(indices[0]), GL_UNSIGNED_INT, 0);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

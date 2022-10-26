@@ -2,15 +2,58 @@
 
 layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 layout(rgba32f, binding = 0) uniform image2D screen;
+layout(std430, binding=1) buffer agentbufferblock { vec4 agentData[]; };
 
-void main()
-{
-	vec4 pixel = vec4(0.0);
+// example shader that shows the agentbufferblock data being sent between gpu/cpu
+void main() {
+	// ---------- update agents ----------
+	int index = int(gl_GlobalInvocationID);
+	vec2 agentPosition = agentData[index].xy;
+	vec2 agentDirection = agentData[index].zw;
+
+	// TODO: put sensing calculations here
+	// you can use this to read the pixels: imageLoad(screen, ivec2 coords)
+	agentDirection = normalize(agentDirection);
+
+	float agentSpeed = 0.0001;
+	agentData[index].zw = agentDirection;
+	agentPosition += agentSpeed * agentDirection;
+	agentData[index].xy = agentPosition;
+
+	if (agentData[index].x > 1.0) {
+		agentData[index].z *= -1.0;
+	} else if (agentData[index].x < 0.0) {
+		agentData[index].z *= -1.0;
+	}
+
+	if (agentData[index].y > 1.0) {
+		agentData[index].w *= -1.0;
+	} else if (agentData[index].y < 0.0) {
+		agentData[index].w *= -1.0;
+	}
+
+	// ---------- drawing logic ----------
 	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-	ivec2 dims = imageSize(screen);
-	bool centre_x = abs(pixel_coords.x - dims.x / 2) < 10;
-	bool centre_y = abs(pixel_coords.y - dims.y / 2) < 10;
-	if (centre_x && centre_y) {
+	vec2 dims = vec2(imageSize(screen));
+
+	// check that current shader's pixel is in vicinity of an agent
+	bool nearAgent = false;
+	float agentRadius = 3.0;
+	int numAgents = 256;
+	for (int i = 0; i < numAgents; i++) {
+		vec2 agentPosition = agentData[i].xy;
+		vec2 agentDirection = agentData[i].zw;
+
+		vec2 agentPixelCoords = agentPosition * dims;
+		nearAgent = nearAgent || length(vec2(pixel_coords) - agentPixelCoords) < agentRadius;
+
+		if (nearAgent) {
+			break;
+		}
+	}
+
+	vec4 pixel = vec4(0.0);
+	if (nearAgent) {
 		pixel = vec4(1.0);
 	} else {
 		// box blur
@@ -26,7 +69,7 @@ void main()
 	}
 
 	// dimming + set alpha channel to 1
-	pixel -= vec4(0.001);
+	pixel -= vec4(0.005);
 	pixel.w = 1.0;
 
 	imageStore(screen, pixel_coords, pixel);
