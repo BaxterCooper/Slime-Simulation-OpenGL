@@ -1,7 +1,10 @@
-#version 330 core
+#version 460 core
+
 out vec4 FragColor;
-uniform sampler2D screen;
+uniform layout(rgba32f) image2D image;
+
 void main() {
-   // FragColor = texture(screen, 1.0, 1.0);
-   FragColor = vec4(1, 0, 0, 1);
+    ivec2 pixelCoord = ivec2(gl_FragCoord.xy);
+    vec4 color = vec4(1.0, 0.0, 0.0, 1.0);
+    imageStore(image, pixelCoord, color);
 }

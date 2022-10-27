@@ -40,6 +40,7 @@ GLfloat *getAgentVertices(Agent *agents) {
 int main() {
 	// ------------------------------------------------------------------------
 	// WINDOW
+
 	glfwInit();
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
@@ -63,78 +64,35 @@ int main() {
 	}
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-
+	
 	// ------------------------------------------------------------------------
 	// SCREEN TEXTURE
 
-	GLuint screenTex;
-	glCreateTextures(GL_TEXTURE_2D, 1, &screenTex);
-	glTextureParameteri(screenTex, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTextureParameteri(screenTex, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTextureParameteri(screenTex, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTextureParameteri(screenTex, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glTextureStorage2D(screenTex, 1, GL_RGBA32F, WINDOW_WIDTH, WINDOW_HEIGHT);
-	glBindImageTexture(0, screenTex, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
-
-	// ------------------------------------------------------------------------
-	// AGENT SHADERS
-
-	Shader agentVertexShader("./shaders/agent.vert", GL_VERTEX_SHADER);
-	Shader agentFragmentShader("./shaders/agent.frag", GL_FRAGMENT_SHADER);
-
-	GLuint agentShaderProgram = glCreateProgram();
-	glAttachShader(agentShaderProgram, agentVertexShader.ID);
-	glAttachShader(agentShaderProgram, agentFragmentShader.ID);
-	glLinkProgram(agentShaderProgram);
-
-	glDeleteShader(agentVertexShader.ID);
-	glDeleteShader(agentFragmentShader.ID);
-
-	Agent *agents = createAgents();
-	glEnable(GL_PROGRAM_POINT_SIZE);
-	GLfloat *agentVertices = getAgentVertices(agents);
-
-	GLuint agentVAO, agentVBO;
-	glGenVertexArrays(1, &agentVAO);
-	glGenBuffers(1, &agentVBO);
-
-	glBindVertexArray(agentVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, agentVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * AGENT_COUNT, agentVertices, GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+	GLuint screenTexture;
+	glCreateTextures(GL_TEXTURE_2D, 1, &screenTexture);
+	glTextureParameteri(screenTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTextureParameteri(screenTexture, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTextureParameteri(screenTexture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTextureParameteri(screenTexture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTextureStorage2D(screenTexture, 1, GL_RGBA32F, WINDOW_WIDTH, WINDOW_HEIGHT);
+	glBindImageTexture(0, screenTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 	// ------------------------------------------------------------------------
 	// SCREEN SHADER
 
-	Shader screenVertexShader("./shaders/screen.vert", GL_VERTEX_SHADER);
-	Shader screenFragmentShader("./shaders/screen.frag", GL_FRAGMENT_SHADER);
-
-	GLuint screenShaderProgram = glCreateProgram();
-	glAttachShader(screenShaderProgram, screenVertexShader.ID);
-	glAttachShader(screenShaderProgram, screenFragmentShader.ID);
-	glLinkProgram(screenShaderProgram);
-
-	glDeleteShader(screenVertexShader.ID);
-	glDeleteShader(screenFragmentShader.ID);
-
-	GLfloat screenVertices[] =
-	{
-		-1.0f, -1.0f,
-		-1.0f,  1.0f,
-		1.0f,  1.0f,
-		1.0f, -1.0f
+	GLfloat screenVertices[] = {
+		-1.0, -1.0,
+		-1.0,  1.0,
+		 1.0,  1.0,
+		 1.0, -1.0,
 	};
 
-	GLuint screenIndices[] =
-	{
+	GLuint screenIndices[] = {
 		0, 2, 1,
-		0, 3, 2
+		0, 2, 3
 	};
+
+	Shader screenShaderProgram("./shaders/screen.vert", "./shaders/screen.frag");
 
 	GLuint screenVAO, screenVBO, screenEBO;
 	glCreateVertexArrays(1, &screenVAO);
@@ -148,43 +106,55 @@ int main() {
 	glVertexArrayAttribBinding(screenVAO, 0, 0);
 	glVertexArrayAttribFormat(screenVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
 
-	glEnableVertexArrayAttrib(screenVAO, 1);
-	glVertexArrayAttribBinding(screenVAO, 1, 0);
-	glVertexArrayAttribFormat(screenVAO, 1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat));
-
 	glVertexArrayVertexBuffer(screenVAO, 0, screenVBO, 0, 2 * sizeof(GLfloat));
 	glVertexArrayElementBuffer(screenVAO, screenEBO);
 
-	// Main while loop
-	while (!glfwWindowShouldClose(window))
-	{
-		// AGENT SHADER
-		glUseProgram(agentShaderProgram);
-		glBindTextureUnit(0, screenTex);
-		glUniform1i(glGetUniformLocation(agentShaderProgram, "screen"), 0);
-		glBindVertexArray(agentVAO);
-		glDrawArrays(GL_POINTS, 0, AGENT_COUNT);
+	// ------------------------------------------------------------------------
+	// AGENT SHADER
+
+	Agent *agents = createAgents();
+
+	GLfloat *agentVertices = getAgentVertices(agents);
+
+	Shader agentShaderProgram("./shaders/agent.vert", "./shaders/agent.frag");
+
+	GLuint agentVAO, agentVBO;
+	glCreateVertexArrays(1, &agentVAO);
+	glCreateBuffers(1, &agentVBO);
+
+	glNamedBufferData(agentVBO, sizeof(GLfloat) * 2 * AGENT_COUNT, agentVertices, GL_STATIC_DRAW);
+
+	glEnableVertexArrayAttrib(agentVAO, 0);
+	glVertexArrayAttribBinding(agentVAO, 0, 0);
+	glVertexArrayAttribFormat(agentVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
+
+	glVertexArrayVertexBuffer(agentVAO, 0, agentVBO, 0, 2 * sizeof(GLfloat));
+
+	// ------------------------------------------------------------------------
+	// MAIN WHILE LOOP
+	
+	while (!glfwWindowShouldClose(window)) {
+		// BIND TEXTURE IMAGE
+		glBindImageTexture(0, screenTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 		// SCREEN SHADER
-		// glUseProgram(screenShaderProgram);
-		// glBindTextureUnit(0, screenTex);
-		// glUniform1i(glGetUniformLocation(screenShaderProgram, "screen"), 0);
-		// glBindVertexArray(screenVAO);
-		// glDrawElements(GL_TRIANGLES, sizeof(screenIndices) / sizeof(screenIndices[0]), GL_UNSIGNED_INT, 0);
+		glUseProgram(screenShaderProgram.ID);
+		glBindVertexArray(screenVAO);
+		glDrawElements(GL_TRIANGLES, sizeof(screenIndices) / sizeof(screenIndices[0]), GL_UNSIGNED_INT, 0);
+
+		// AGENT SHADER
+		glUseProgram(agentShaderProgram.ID);
+		glBindVertexArray(agentVAO);
+		glDrawArrays(GL_POINTS, 0, AGENT_COUNT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		std::cout << glGetError() << "\n";
 	}
-
-
-
-	// Delete all the objects we've created
-	glDeleteVertexArrays(1, &agentVAO);
-	glDeleteBuffers(1, &agentVBO);
-	glDeleteProgram(agentShaderProgram);
-	// Delete window before ending the program
+	
 	glfwDestroyWindow(window);
-	// Terminate GLFW before ending the program
 	glfwTerminate();
 	return 0;
 }
