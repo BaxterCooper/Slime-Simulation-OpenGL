@@ -64,7 +64,7 @@ int main() {
 	}
 
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-	
+
 	// ------------------------------------------------------------------------
 	// SCREEN TEXTURE
 
@@ -131,6 +131,25 @@ int main() {
 	glVertexArrayVertexBuffer(agentVAO, 0, agentVBO, 0, 2 * sizeof(GLfloat));
 
 	// ------------------------------------------------------------------------
+	// BOX-BLUR SHADER
+
+	Shader blurShaderProgram("./shaders/box-blur.vert", "./shaders/box-blur.frag");
+
+	// glCreateVertexArrays(1, &screenVAO);
+	// glCreateBuffers(1, &screenVBO);
+	// glCreateBuffers(1, &screenEBO);
+
+	// glNamedBufferData(screenVBO, sizeof(screenVertices), screenVertices, GL_STATIC_DRAW);
+	// glNamedBufferData(screenEBO, sizeof(screenIndices), screenIndices, GL_STATIC_DRAW);
+
+	// glEnableVertexArrayAttrib(screenVAO, 0);
+	// glVertexArrayAttribBinding(screenVAO, 0, 0);
+	// glVertexArrayAttribFormat(screenVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
+
+	// glVertexArrayVertexBuffer(screenVAO, 0, screenVBO, 0, 2 * sizeof(GLfloat));
+	// glVertexArrayElementBuffer(screenVAO, screenEBO);
+
+	// ------------------------------------------------------------------------
 	// MAIN WHILE LOOP
 	
 	while (!glfwWindowShouldClose(window)) {
@@ -146,6 +165,12 @@ int main() {
 		glUseProgram(agentShaderProgram.ID);
 		glBindVertexArray(agentVAO);
 		glDrawArrays(GL_POINTS, 0, AGENT_COUNT);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
+		// BLUR SHADER
+		glUseProgram(blurShaderProgram.ID);
+		glBindVertexArray(screenVAO);
+		glDrawElements(GL_TRIANGLES, sizeof(screenIndices) / sizeof(screenIndices[0]), GL_UNSIGNED_INT, 0);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 		glfwSwapBuffers(window);
