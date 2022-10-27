@@ -39,7 +39,7 @@ GLfloat *getAgentVertices(Agent *agents) {
 
 int main() {
 	// ------------------------------------------------------------------------
-	// WINDOW
+	// WINDOW INITALISATION
 
 	glfwInit();
 
@@ -66,8 +66,9 @@ int main() {
 	glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	// ------------------------------------------------------------------------
-	// SCREEN TEXTURE
+	// TEXTURES
 
+	/* SCREEN */
 	GLuint screenTexture;
 	glCreateTextures(GL_TEXTURE_2D, 1, &screenTexture);
 	glTextureParameteri(screenTexture, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -78,8 +79,9 @@ int main() {
 	glBindImageTexture(0, screenTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 	// ------------------------------------------------------------------------
-	// SCREEN SHADER
+	// OBJECTS
 
+	/* SCREEN */
 	GLfloat screenVertices[] = {
 		-1.0, -1.0,
 		-1.0,  1.0,
@@ -91,8 +93,6 @@ int main() {
 		0, 2, 1,
 		0, 2, 3
 	};
-
-	Shader screenShaderProgram("./shaders/screen.vert", "./shaders/screen.frag");
 
 	GLuint screenVAO, screenVBO, screenEBO;
 	glCreateVertexArrays(1, &screenVAO);
@@ -109,14 +109,10 @@ int main() {
 	glVertexArrayVertexBuffer(screenVAO, 0, screenVBO, 0, 2 * sizeof(GLfloat));
 	glVertexArrayElementBuffer(screenVAO, screenEBO);
 
-	// ------------------------------------------------------------------------
-	// AGENT SHADER
-
+	/* AGENT */
 	Agent *agents = createAgents();
 
 	GLfloat *agentVertices = getAgentVertices(agents);
-
-	Shader agentShaderProgram("./shaders/agent.vert", "./shaders/agent.frag");
 
 	GLuint agentVAO, agentVBO;
 	glCreateVertexArrays(1, &agentVAO);
@@ -131,23 +127,11 @@ int main() {
 	glVertexArrayVertexBuffer(agentVAO, 0, agentVBO, 0, 2 * sizeof(GLfloat));
 
 	// ------------------------------------------------------------------------
-	// BOX-BLUR SHADER
+	// SHADERS
 
+	Shader screenShaderProgram("./shaders/screen.vert", "./shaders/screen.frag");
+	Shader agentShaderProgram("./shaders/agent.vert", "./shaders/agent.frag");
 	Shader blurShaderProgram("./shaders/box-blur.vert", "./shaders/box-blur.frag");
-
-	// glCreateVertexArrays(1, &screenVAO);
-	// glCreateBuffers(1, &screenVBO);
-	// glCreateBuffers(1, &screenEBO);
-
-	// glNamedBufferData(screenVBO, sizeof(screenVertices), screenVertices, GL_STATIC_DRAW);
-	// glNamedBufferData(screenEBO, sizeof(screenIndices), screenIndices, GL_STATIC_DRAW);
-
-	// glEnableVertexArrayAttrib(screenVAO, 0);
-	// glVertexArrayAttribBinding(screenVAO, 0, 0);
-	// glVertexArrayAttribFormat(screenVAO, 0, 2, GL_FLOAT, GL_FALSE, 0);
-
-	// glVertexArrayVertexBuffer(screenVAO, 0, screenVBO, 0, 2 * sizeof(GLfloat));
-	// glVertexArrayElementBuffer(screenVAO, screenEBO);
 
 	// ------------------------------------------------------------------------
 	// MAIN WHILE LOOP
