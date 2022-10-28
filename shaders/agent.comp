@@ -17,11 +17,12 @@ vec2 rotate(vec2 v, float a) {
 
 void main() {
 	int index = int(gl_GlobalInvocationID);
-	ivec2 pixel_coords = ivec2(gl_GlobalInvocationID.xy);
-	vec2 dims = vec2(imageSize(image));
 
 	vec2 agentPosition = agentPositions[index];
 	vec2 agentDirection = agentDirections[index];
+
+	vec2 dims = vec2(imageSize(image));
+	ivec2 pixel_coords = ivec2(dims * agentPosition);
 
 	// ---------- sensing computations ----------
 	float lookAheadDistance = 0.01;
