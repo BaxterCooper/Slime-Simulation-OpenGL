@@ -14,15 +14,20 @@ void main() {
 	vec2 agentPosition = agentPositions[index].xy;
 	vec2 agentDirection = agentDirections[index].xy;
 
-	agentPositions[index].xy = agentPosition + agentDirection * agentSpeed;
+	agentPosition = agentPosition + agentDirection * agentSpeed;
+	agentPositions[index].xy = agentPosition;
 
+	if (agentPosition.x > 1.0) {
+		agentDirection.x *= -1.0;
+	} else if (agentPosition.x < -1.0) {
+		agentDirection.x *= -1.0;
+	}
 
-	// ---------- drawing logic ----------
-	// check that current shader's pixel is in vicinity of an agent
-	// vec2 dims = vec2(imageSize(image));
+	if (agentPosition.y > 1.0) {
+		agentDirection.y *= -1.0;
+	} else if (agentPosition.y < -1.0) {
+		agentDirection.y *= -1.0;
+	}
 
-	// vec4 color = vec4(1.0, 1.0, 1.0, 1.0);
-
-	// ivec2 pixelCoords = ivec2(agentPosition * dims);
-	// imageStore(image, pixelCoords, color);
+	agentDirections[index] = agentDirection;
 }

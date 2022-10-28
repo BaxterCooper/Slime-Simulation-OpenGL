@@ -16,6 +16,6 @@ const float SENSOR_ANGLE = 1.0f;
 
 /* SHADERS */
 const float BLUR_SPEED = 0.8f;
-const float FADE_SPEED = 0.9f;
+const float FADE_SPEED = 0.2f;
 
 #endif
