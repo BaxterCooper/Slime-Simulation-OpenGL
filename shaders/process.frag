@@ -21,11 +21,11 @@ void main() {
             color += neighbourPixel;
         }
     }
-    color /= 9.0;
+    color /= 10.0; // >9 in order to contribute to dimming
     color = mix(originalColor, color, blurSpeed);
 
     // FADE
-    color *= (1.0 - fadeSpeed);
+    color -= fadeSpeed;
     color = clamp(color, 0.0, 1.0);
 
     // KEEP COLOR ALPHA CONSTANT
