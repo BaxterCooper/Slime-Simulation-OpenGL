@@ -13,6 +13,9 @@ uniform int sensorSize;
 uniform float sensorOffset;
 uniform float sensorFOV;
 
+/*
+ * IN RADIANS
+ */
 vec2 rotate(vec2 v, float a) {
 	float s = sin(a);
 	float c = cos(a);
@@ -20,21 +23,58 @@ vec2 rotate(vec2 v, float a) {
 	return m * v;
 }
 
+/*
+ * Required since negative pixelLocations are out of bounds
+ * where x is the image dimensions... f: [-x, x] => [0, 2x]
+ */
 vec4 imageLookup(ivec2 pixelLocation) {
 	vec2 dims = vec2(imageSize(image));
 	return imageLoad(image, ivec2(0.5 * (pixelLocation + dims)));
 }
 
-vec4 sense(ivec2 centrePixelCoord) {
+/*
+ * Computes total colour of a neighbourhood
+ */
+vec4 senseValue(ivec2 signedCentrePixelCoord) {
 	vec4 sum = vec4(0.0);
 	for (int i = -sensorSize; i <= sensorSize; i++) {
 		for (int j = -sensorSize; j <= sensorSize; j++) {
-			ivec2 pixelCoord = centrePixelCoord + ivec2(i, j);
+			ivec2 pixelCoord = signedCentrePixelCoord + ivec2(i, j);
 			sum += imageLookup(pixelCoord);
 		}
 	}
 
 	return sum;
+}
+
+/* The attraction to a direction is a vector in that direction
+ * with a magnitude equal to the colour (brightness) of the neighbourhood
+ */
+vec2 senseAttraction(vec2 agentPosition, vec2 senseCast) {
+	vec2 dims = vec2(imageSize(image));
+	vec2 offset = sensorOffset * senseCast;
+	vec2 sensePosition = agentPosition + offset;
+	ivec2 signedSensePixelPosition = ivec2(sensePosition * dims);
+	float senseWeighting = senseValue(signedSensePixelPosition).r;
+	vec2 attraction = senseCast * senseWeighting;
+	return attraction;
+}
+
+/*
+ * Computes the acceleration based on 3 regions of colour in front of the agent
+ * Requires a low FOV for emergent properties (otherwise agents remain stationary)
+ */
+vec2 computeAcceleration(vec2 agentPosition, vec2 agentDirection) {
+	// ------------------------------------------------------------------------
+	// SENSE
+	vec2 forwardCast = normalize(agentDirection);
+	vec2 rightCast = rotate(agentDirection, -0.5 * sensorFOV);
+	vec2 leftCast = rotate(agentDirection, 0.5 * sensorFOV);
+	return (
+		senseAttraction(agentPosition, forwardCast) +
+		senseAttraction(agentPosition, rightCast) +
+		senseAttraction(agentPosition, leftCast)
+	);
 }
 
 void main() {
@@ -46,38 +86,8 @@ void main() {
 	vec2 dims = vec2(imageSize(image));
 	ivec2 pixel_coords = ivec2(dims * agentPosition);
 
-	// ------------------------------------------------------------------------
-	// SENSE
-	vec2 forwardCast = normalize(agentDirection);
-	vec2 rightCast = rotate(agentDirection, -0.5 * sensorFOV);
-	vec2 leftCast = rotate(agentDirection, 0.5 * sensorFOV);
-
-	// OFFSETS
-	vec2 offsetForward = sensorOffset * agentDirection;
-	vec2 offsetRight = sensorOffset * rightCast;
-	vec2 offsetLeft = sensorOffset * leftCast;
-
-	// POSITIONS
-	vec2 positionForward = agentPosition + offsetForward;
-	vec2 positionRight = agentPosition + offsetRight;
-	vec2 positionLeft = agentPosition + offsetLeft;
-
-	// COORDINATES
-	ivec2 pixelCoordForward = ivec2(positionForward * dims);
-	ivec2 pixelCoordRight = ivec2(positionRight * dims);
-	ivec2 pixelCoordLeft = ivec2(positionLeft * dims);
-
-	// SENSING WEIGHTS
-	float weightForward = sense(pixelCoordForward).x;
-	float weightRight = sense(pixelCoordRight).x;
-	float weightLeft = sense(pixelCoordLeft).x;
-
-	// CHANGE DIRECTION 
-	vec2 directionForward = agentDirection * weightForward;
-	vec2 directionRight = weightRight * rightCast;
-	vec2 directionLeft = weightLeft * leftCast;
-
-	agentDirection += directionForward + directionRight + directionLeft;
+	// directionForward + directionRight + directionLeft;
+	agentDirection += computeAcceleration(agentPosition, agentDirection);
 	agentDirection = normalize(agentDirection);
 
 	// -----------------------
