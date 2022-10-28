@@ -25,7 +25,7 @@ vec2 rotate(vec2 v, float a) {
 
 /*
  * Required since negative pixelLocations are out of bounds
- * where x is the image dimensions... f: [-x, x] => [0, 2x]
+ * where x is the image dimensions... f: [-x, x] => [0, x]
  */
 vec4 imageLookup(ivec2 pixelLocation) {
 	vec2 dims = vec2(imageSize(image));
