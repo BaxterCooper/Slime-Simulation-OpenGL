@@ -226,12 +226,18 @@ int main() {
 		glUseProgram(agentComputeProgram);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, agentVAO1);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, agentVAO2);
-		glUniform1f(glGetUniformLocation(agentComputeProgram, "agentSpeed"), AGENT_SPEED);
+		glUniform1f(glGetUniformLocation(agentComputeProgram, "agentMoveSpeed"), AGENT_MOVE_SPEED);
+		glUniform1f(glGetUniformLocation(agentComputeProgram, "agentTurnSpeed"), AGENT_TURN_SPEED);
+		glUniform1i(glGetUniformLocation(agentComputeProgram, "sensorSize"), SENSOR_SIZE);
+		glUniform1f(glGetUniformLocation(agentComputeProgram, "sensorOffset"), SENSOR_OFFSET);
+		glUniform1f(glGetUniformLocation(agentComputeProgram, "sensorFOV"), SENSOR_FOV);
 		glDispatchCompute(AGENT_COUNT, AGENT_COUNT, 1); // can be optimised
 		glMemoryBarrier(GL_ALL_BARRIER_BITS); // can be optimised
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		std::cout << glGetError() << "\n";
 	}
 
 	glDeleteVertexArrays(1, &agentVAO1);
