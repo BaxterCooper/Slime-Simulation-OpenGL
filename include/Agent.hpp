@@ -1,10 +1,8 @@
-#ifndef AGENT_H
-#define AGENT_H
+#ifndef AGENT
+#define AGENT
 
 #include <glm/glm.hpp>
 #include <glm/gtc/random.hpp>
-
-#include <config.hpp>
 
 class Agent {
     public:
