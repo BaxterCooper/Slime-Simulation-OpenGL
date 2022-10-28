@@ -15,6 +15,7 @@
 const unsigned short OPENGL_MAJOR_VERSION = 4;
 const unsigned short OPENGL_MINOR_VERSION = 6;
 
+
 Agent *createAgents() {
 	Agent *agents = new Agent[AGENT_COUNT];
 	for (int i = 0; i < AGENT_COUNT; i++) {
@@ -219,20 +220,18 @@ int main() {
 		glUniform1f(glGetUniformLocation(processShaderProgram, "fadeSpeed"), FADE_SPEED);
 		glBindVertexArray(screenVAO);
 		glDrawElements(GL_TRIANGLES, sizeof(screenIndices) / sizeof(screenIndices[0]), GL_UNSIGNED_INT, 0);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		glMemoryBarrier(GL_ALL_BARRIER_BITS); // can be optimised
 
 		// AGENT COMPUTE
 		glUseProgram(agentComputeProgram);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, agentVAO1);
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, agentVAO2);
 		glUniform1f(glGetUniformLocation(agentComputeProgram, "agentSpeed"), AGENT_SPEED);
-		glDispatchCompute(WINDOW_WIDTH, WINDOW_HEIGHT, 1);
-		glMemoryBarrier(GL_ALL_BARRIER_BITS);
+		glDispatchCompute(AGENT_COUNT, AGENT_COUNT, 1); // can be optimised
+		glMemoryBarrier(GL_ALL_BARRIER_BITS); // can be optimised
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
-		std::cout << glGetError() << "\n";
 	}
 
 	glDeleteVertexArrays(1, &agentVAO1);
