@@ -25,13 +25,23 @@ GLFW has pre-compiled binaries on their website, instructions for compiling thes
 
 These binaries must be placed into the `./lib` directory to be used with the Makefile provided.
 
+## Configuration
+
+The configuration settings can be found in `./include/config.hpp`.
+
+
+
 ## Compilation
 
-`make`
+```bash
+make
+```
 
 ## Execution
 
-`./main`
+```bash
+./main
+```
 
 
 
