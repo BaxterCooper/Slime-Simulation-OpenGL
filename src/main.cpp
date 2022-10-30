@@ -139,6 +139,7 @@ int main() {
 
 	// ------------------------------------------------------------------------
 	// DATA
+	
 	Agent *agents = createAgents();
 
 	GLfloat *agentPositions = getAgentPositions(agents);
@@ -236,18 +237,26 @@ int main() {
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
-
-		std::cout << glGetError() << "\n";
 	}
+
+
+	// ------------------------------------------------------------------------
+	// CLEANUP
 
 	glDeleteVertexArrays(1, &agentVAO1);
 	glDeleteBuffers(1, &agentVBO1);
-	glDeleteProgram(agentShaderProgram);
-	
+
+	glDeleteVertexArrays(1, &agentVAO2);
+	glDeleteBuffers(1, &agentVBO2);
+
 	glDeleteVertexArrays(1, &screenVAO);
 	glDeleteBuffers(1, &screenVBO);
 	glDeleteBuffers(1, &screenEBO);
+
+	glDeleteProgram(agentShaderProgram);
 	glDeleteProgram(screenShaderProgram);
+	glDeleteProgram(processShaderProgram);
+	glDeleteProgram(agentComputeProgram);
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
