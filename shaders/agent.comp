@@ -13,7 +13,12 @@ uniform int sensorSize;
 uniform float sensorOffset;
 uniform float sensorFOV;
 
+// unused but now available
+uniform int time;
 
+/*
+ * IN RADIANS
+ */
 vec2 rotate(vec2 v, float a) {
 	float s = sin(a);
 	float c = cos(a);
@@ -30,6 +35,9 @@ vec4 sense(ivec2 centrePixelCoord) {
 		}
 	}
 
+	sum /= max(float(sensorSize * sensorSize), 1.0);
+	sum = clamp(sum, 0.0, 1.0);
+
 	return sum;
 }
 
@@ -37,6 +45,40 @@ float rand(vec2 co) {
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
+
+/* Accounts for the formation of lines and circles
+ * Prevents the simulation stagnating by causing the agent to
+ * Travel opposite to its attraction when it detects high likelihood of a chain
+ */
+vec2 senseDeviatedAttraction(vec2 agentPosition, vec2 senseCast, float deviation) {
+	vec2 simpleAttraction = senseAttraction(agentPosition, senseCast);
+	float attractiveStrength = length(simpleAttraction);
+	float attractionTendency = 0.75;
+	vec2 attraction = (attractionTendency - deviation) * simpleAttraction;
+	return attraction;
+}
+
+/*
+ * Computes the acceleration based on 3 regions of colour in front of the agent
+ * Requires a low FOV for emergent properties (otherwise agents remain stationary)
+ */
+vec2 computeAcceleration(vec2 agentPosition, vec2 agentDirection) {
+	// ------------------------------------------------------------------------
+	// SENSE
+	vec2 forwardCast = normalize(agentDirection);
+	vec2 rightCast = rotate(agentDirection, -0.5 * sensorFOV);
+	vec2 leftCast = rotate(agentDirection, 0.5 * sensorFOV);
+
+	vec2 farCast = senseAttraction(agentPosition, forwardCast);
+	vec2 furtherCast = senseAttraction(agentPosition, forwardCast * 2.0);
+	float deviation = clamp(length(farCast) / length(furtherCast), 0.0, 1.0);
+
+	return (
+		senseAttraction(agentPosition, forwardCast) +
+		senseDeviatedAttraction(agentPosition, rightCast, deviation) +
+		senseDeviatedAttraction(agentPosition, leftCast, deviation)
+	);
+}
 
 void main() {
 	vec2 dims = vec2(imageSize(image));

@@ -44,6 +44,7 @@ GLfloat *getAgentDirections(Agent *agents) {
 
 
 int main() {
+	srand(time(NULL));
 	// ------------------------------------------------------------------------
 	// WINDOW INITALISATION
 
@@ -195,7 +196,6 @@ int main() {
 
 	glVertexArrayVertexBuffer(screenVAO, 0, screenVBO, 0, 2 * sizeof(GLfloat));
 	glVertexArrayElementBuffer(screenVAO, screenEBO);
-	
 
 	// ------------------------------------------------------------------------
 	// MAIN WHILE LOOP
@@ -206,6 +206,7 @@ int main() {
 
 		// AGENT SHADER
 		glUseProgram(agentShaderProgram);
+		glUniform1f(glGetUniformLocation(agentShaderProgram, "agentLuminance"), AGENT_LUMINANCE);
 		glBindVertexArray(agentVAO1);
 		glDrawArrays(GL_POINTS, 0, AGENT_COUNT);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
@@ -232,6 +233,7 @@ int main() {
 		glUniform1i(glGetUniformLocation(agentComputeProgram, "sensorSize"), SENSOR_SIZE);
 		glUniform1f(glGetUniformLocation(agentComputeProgram, "sensorOffset"), SENSOR_OFFSET);
 		glUniform1f(glGetUniformLocation(agentComputeProgram, "sensorFOV"), SENSOR_FOV);
+		glUniform1i(glGetUniformLocation(agentComputeProgram, "time"), time(NULL));
 		glDispatchCompute(AGENT_COUNT, AGENT_COUNT, 1); // can be optimised
 		glMemoryBarrier(GL_ALL_BARRIER_BITS); // can be optimised
 
