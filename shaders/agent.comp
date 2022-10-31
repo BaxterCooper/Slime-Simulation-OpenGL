@@ -86,7 +86,8 @@ vec2 senseAttraction(vec2 agentPosition, vec2 senseCast) {
 }
 
 /* Accounts for the formation of lines and circles
- * Otherwise the simulation stagnates
+ * Prevents the simulation stagnating by causing the agent to
+ * Travel opposite to its attraction when it detects high likelihood of a chain
  */
 vec2 senseDeviatedAttraction(vec2 agentPosition, vec2 senseCast, float deviation) {
 	vec2 simpleAttraction = senseAttraction(agentPosition, senseCast);
