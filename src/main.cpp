@@ -205,6 +205,7 @@ int main() {
 
 		// AGENT SHADER
 		glUseProgram(agentShaderProgram);
+		glUniform1f(glGetUniformLocation(agentShaderProgram, "agentLuminance"), AGENT_LUMINANCE);
 		glBindVertexArray(agentVAO1);
 		glDrawArrays(GL_POINTS, 0, AGENT_COUNT);
 		glMemoryBarrier(GL_ALL_BARRIER_BITS);
