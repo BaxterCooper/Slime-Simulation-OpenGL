@@ -26,24 +26,12 @@ vec2 rotate(vec2 v, float a) {
 	return m * v;
 }
 
-/*
- * Required since negative pixelLocations are out of bounds
- * where x is the image dimensions... f: [-x, x] => [0, x]
- */
-vec4 imageLookup(ivec2 pixelLocation) {
-	vec2 dims = vec2(imageSize(image));
-	return imageLoad(image, ivec2(0.5 * (pixelLocation + dims)));
-}
-
-/*
- * Computes total colour of a neighbourhood
- */
-vec4 senseValue(ivec2 signedCentrePixelCoord) {
+vec4 sense(ivec2 centrePixelCoord) {
 	vec4 sum = vec4(0.0);
 	for (int i = -sensorSize; i <= sensorSize; i++) {
 		for (int j = -sensorSize; j <= sensorSize; j++) {
-			ivec2 pixelCoord = signedCentrePixelCoord + ivec2(i, j);
-			sum += imageLookup(pixelCoord);
+			ivec2 pixelCoord = centrePixelCoord + ivec2(i, j);
+			sum += imageLoad(image, pixelCoord);
 		}
 	}
 
@@ -53,18 +41,10 @@ vec4 senseValue(ivec2 signedCentrePixelCoord) {
 	return sum;
 }
 
-/* The attraction to a direction is a vector in that direction
- * with a magnitude equal to the colour (brightness) of the neighbourhood
- */
-vec2 senseAttraction(vec2 agentPosition, vec2 senseCast) {
-	vec2 dims = vec2(imageSize(image));
-	vec2 offset = sensorOffset * senseCast;
-	vec2 sensePosition = agentPosition + offset;
-	ivec2 signedSensePixelPosition = ivec2(sensePosition * dims);
-	float senseWeighting = senseValue(signedSensePixelPosition).r;
-	vec2 attraction = senseCast * senseWeighting;
-	return attraction;
+float rand(vec2 co) {
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
+
 
 /* Accounts for the formation of lines and circles
  * Prevents the simulation stagnating by causing the agent to
@@ -101,29 +81,58 @@ vec2 computeAcceleration(vec2 agentPosition, vec2 agentDirection) {
 }
 
 void main() {
+	vec2 dims = vec2(imageSize(image));
 	int index = int(gl_GlobalInvocationID);
 
 	vec2 agentPosition = agentPositions[index];
 	vec2 agentDirection = agentDirections[index];
 
-	vec2 dims = vec2(imageSize(image));
-	ivec2 pixel_coords = ivec2(dims * agentPosition);
+	float random = rand(agentPosition * agentDirection * index);
 
-	// directionForward + directionRight + directionLeft;
-	agentDirection += computeAcceleration(agentPosition, agentDirection);
+	// ------------------------------------------------------------------------
+	// SENSE
+
+	// OFFSETS
+	vec2 offsetForward = sensorOffset * agentDirection;
+	vec2 offsetRight = sensorOffset * rotate(agentDirection, -0.5 * sensorFOV);
+	vec2 offsetLeft = sensorOffset * rotate(agentDirection, 0.5 * sensorFOV);
+
+	// POSITIONS
+	vec2 positionForward = agentPosition + offsetForward;
+	vec2 positionRight = agentPosition + offsetRight;
+	vec2 positionLeft = agentPosition + offsetLeft;
+
+	// COORDINATES
+	ivec2 pixelCoordForward = ivec2((positionForward + 1.0) * dims * 0.5);
+	ivec2 pixelCoordRight = ivec2((positionRight + 1.0) * dims * 0.5);
+	ivec2 pixelCoordLeft = ivec2((positionLeft + 1.0) * dims * 0.5);
+
+	// SENSING WEIGHTS
+	float weightForward = sense(pixelCoordForward).x * 0.1;
+	float weightRight = sense(pixelCoordRight).x;
+	float weightLeft = sense(pixelCoordLeft).x;
+
+	// CHANGE DIRECTION 
+	vec2 directionForward = agentDirection * weightForward;
+	vec2 directionRight = weightRight * rotate(agentDirection, -0.5 * agentTurnSpeed * sensorFOV);
+	vec2 directionLeft = weightLeft * rotate(agentDirection, 0.5 * agentTurnSpeed * sensorFOV);
+
+	agentDirection += directionForward + directionRight + directionLeft;
+
 	agentDirection = normalize(agentDirection);
 
-	// -----------------------
-	agentPosition = agentPosition + agentDirection * agentMoveSpeed;
+	agentPosition = agentPosition + (agentDirection / dims) * agentMoveSpeed;
 	agentPositions[index] = agentPosition;
 
 	// BOUNDARY CONDITION
 	if (agentPosition.x > 1.0 || agentPosition.x < -1.0) {
 		agentDirection.x *= -1.0;
+		agentDirection.y = random * 2.0 - 1.0;
 	}
 
 	if (agentPosition.y > 1.0 || agentPosition.y < -1.0) {
 		agentDirection.y *= -1.0;
+		agentDirection.x = random * 2.0 - 1.0;
 	}
 
 	agentDirections[index] = agentDirection;
