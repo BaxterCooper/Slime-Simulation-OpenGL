@@ -13,7 +13,7 @@ uniform int sensorSize;
 uniform float sensorOffset;
 uniform float sensorFOV;
 
-// uniform int time;
+uniform int time;
 
 float rand(float n) {
 	return fract(sin(n * 12.9898) * 43758.5453);
