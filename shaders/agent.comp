@@ -13,9 +13,7 @@ uniform int sensorSize;
 uniform float sensorOffset;
 uniform float sensorFOV;
 
-/*
- * IN RADIANS
- */
+
 vec2 rotate(vec2 v, float a) {
 	float s = sin(a);
 	float c = cos(a);
@@ -23,74 +21,62 @@ vec2 rotate(vec2 v, float a) {
 	return m * v;
 }
 
-/*
- * Required since negative pixelLocations are out of bounds
- * where x is the image dimensions... f: [-x, x] => [0, x]
- */
-vec4 imageLookup(ivec2 pixelLocation) {
-	vec2 dims = vec2(imageSize(image));
-	return imageLoad(image, ivec2(0.5 * (pixelLocation + dims)));
-}
+float sense(ivec2 centrePixelCoord) {
+	ivec2 dims = ivec2(imageSize(image));
 
-/*
- * Computes total colour of a neighbourhood
- */
-vec4 senseValue(ivec2 signedCentrePixelCoord) {
-	vec4 sum = vec4(0.0);
+	float sum = 0.0;
 	for (int i = -sensorSize; i <= sensorSize; i++) {
 		for (int j = -sensorSize; j <= sensorSize; j++) {
-			ivec2 pixelCoord = signedCentrePixelCoord + ivec2(i, j);
-			sum += imageLookup(pixelCoord);
+			ivec2 pixelCoord = centrePixelCoord + ivec2(i, j);
+
+			if (pixelCoord.x >= 0 && pixelCoord.x <= dims.x && pixelCoord.y >= 0 && pixelCoord.y <= dims.y) {
+				sum += imageLoad(image, pixelCoord).x;
+			}
 		}
 	}
 
 	return sum;
 }
 
-/* The attraction to a direction is a vector in that direction
- * with a magnitude equal to the colour (brightness) of the neighbourhood
- */
-vec2 senseAttraction(vec2 agentPosition, vec2 senseCast) {
-	vec2 dims = vec2(imageSize(image));
-	vec2 offset = sensorOffset * senseCast;
-	vec2 sensePosition = agentPosition + offset;
-	ivec2 signedSensePixelPosition = ivec2(sensePosition * dims);
-	float senseWeighting = senseValue(signedSensePixelPosition).r;
-	vec2 attraction = senseCast * senseWeighting;
-	return attraction;
-}
-
-/*
- * Computes the acceleration based on 3 regions of colour in front of the agent
- * Requires a low FOV for emergent properties (otherwise agents remain stationary)
- */
-vec2 computeAcceleration(vec2 agentPosition, vec2 agentDirection) {
-	// ------------------------------------------------------------------------
-	// SENSE
-	vec2 forwardCast = normalize(agentDirection);
-	vec2 rightCast = rotate(agentDirection, -0.5 * sensorFOV);
-	vec2 leftCast = rotate(agentDirection, 0.5 * sensorFOV);
-	return (
-		senseAttraction(agentPosition, forwardCast) +
-		senseAttraction(agentPosition, rightCast) +
-		senseAttraction(agentPosition, leftCast)
-	);
-}
-
 void main() {
+	vec2 dims = vec2(imageSize(image));
 	int index = int(gl_GlobalInvocationID);
 
 	vec2 agentPosition = agentPositions[index];
 	vec2 agentDirection = agentDirections[index];
 
-	vec2 dims = vec2(imageSize(image));
-	ivec2 pixel_coords = ivec2(dims * agentPosition);
+	// ------------------------------------------------------------------------
+	// SENSE
 
-	// directionForward + directionRight + directionLeft;
-	agentDirection += computeAcceleration(agentPosition, agentDirection);
+	// OFFSETS
+	vec2 offsetForward = sensorOffset * agentDirection;
+	vec2 offsetRight = sensorOffset * rotate(agentDirection, -0.5 * sensorFOV);
+	vec2 offsetLeft = sensorOffset * rotate(agentDirection, 0.5 * sensorFOV);
+
+	// POSITIONS
+	vec2 positionForward = agentPosition + offsetForward;
+	vec2 positionRight = agentPosition + offsetRight;
+	vec2 positionLeft = agentPosition + offsetLeft;
+
+	// COORDINATES
+	ivec2 pixelCoordForward = ivec2((positionForward + 1.0) * dims * 0.5);
+	ivec2 pixelCoordRight = ivec2((positionRight + 1.0) * dims * 0.5);
+	ivec2 pixelCoordLeft = ivec2((positionLeft + 1.0) * dims * 0.5);
+
+	// SENSING WEIGHTS
+	float weightForward = sense(pixelCoordForward);
+	float weightRight = sense(pixelCoordRight);
+	float weightLeft = sense(pixelCoordLeft);
+
+	// CHANGE DIRECTION 
+	vec2 directionForward = agentDirection * weightForward;
+	vec2 directionRight = weightRight * rotate(agentDirection, -0.5 * agentTurnSpeed * sensorFOV);
+	vec2 directionLeft = weightLeft * rotate(agentDirection, 0.5 * agentTurnSpeed * sensorFOV);
+
+	agentDirection += directionForward + directionRight + directionLeft;
+
 	agentDirection = normalize(agentDirection);
 
-	// -----------------------
 	agentPosition = agentPosition + agentDirection * agentMoveSpeed;
 	agentPositions[index] = agentPosition;
 

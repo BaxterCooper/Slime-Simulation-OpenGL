@@ -237,6 +237,8 @@ int main() {
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+		std::cout << glGetError() << "\n";
 	}
 
 
