@@ -25,6 +25,7 @@ void main() {
     color = mix(originalColor, color, blurSpeed);
 
     // FADE
+    color *= (1.0 - fadeSpeed);
     color -= fadeSpeed;
     color = clamp(color, 0.0, 1.0);
 
