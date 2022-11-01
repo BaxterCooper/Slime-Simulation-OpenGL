@@ -197,6 +197,7 @@ int main() {
 	glVertexArrayVertexBuffer(screenVAO, 0, screenVBO, 0, 2 * sizeof(GLfloat));
 	glVertexArrayElementBuffer(screenVAO, screenEBO);
 
+
 	// ------------------------------------------------------------------------
 	// MAIN WHILE LOOP
 	
@@ -234,7 +235,7 @@ int main() {
 		glUniform1f(glGetUniformLocation(agentComputeProgram, "sensorOffset"), SENSOR_OFFSET);
 		glUniform1f(glGetUniformLocation(agentComputeProgram, "sensorFOV"), SENSOR_FOV);
 		glUniform1i(glGetUniformLocation(agentComputeProgram, "time"), time(NULL));
-		glDispatchCompute(AGENT_COUNT, AGENT_COUNT, 1); // can be optimised
+		glDispatchCompute(AGENT_COUNT / 8, AGENT_COUNT / 8, 1); // can be optimised
 		glMemoryBarrier(GL_ALL_BARRIER_BITS); // can be optimised
 
 		glfwSwapBuffers(window);

@@ -86,7 +86,7 @@ vec2 computeAcceleration(vec2 agentPosition, vec2 agentDirection) {
 
 	vec2 farCast = senseAttraction(agentPosition, forwardCast);
 	vec2 furtherCast = senseAttraction(agentPosition, forwardCast * 2.0);
-	float deviation = clamp(length(farCast) / length(furtherCast), 0.0, 1.0);
+	float deviation = clamp(length(farCast) / length(furtherCast), 0.0, 0.6);
 
 	return (
 		senseAttraction(agentPosition, forwardCast) +
