@@ -26,6 +26,13 @@ vec2 rotate(vec2 v, float a) {
 	return m * v;
 }
 
+float rand(vec2 co) {
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+/*
+ * Computes average value of a neighbourhood
+ */
 vec4 sense(ivec2 centrePixelCoord) {
 	vec4 sum = vec4(0.0);
 	for (int i = -sensorSize; i <= sensorSize; i++) {
@@ -41,10 +48,18 @@ vec4 sense(ivec2 centrePixelCoord) {
 	return sum;
 }
 
-float rand(vec2 co) {
-    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+/* The attraction to a direction is a vector in that direction
+ * with a magnitude equal to the colour (brightness) of the neighbourhood
+ */
+vec2 senseAttraction(vec2 agentPosition, vec2 senseCast) {
+	vec2 dims = vec2(imageSize(image));
+	vec2 offset = sensorOffset * senseCast;
+	vec2 sensePosition = agentPosition + offset;
+	ivec2 signedSensePixelPosition = ivec2(sensePosition * dims);
+	float senseWeighting = sense(signedSensePixelPosition).r;
+	vec2 attraction = senseCast * senseWeighting;
+	return attraction;
 }
-
 
 /* Accounts for the formation of lines and circles
  * Prevents the simulation stagnating by causing the agent to
